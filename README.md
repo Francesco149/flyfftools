@@ -25,7 +25,8 @@ find /path/to/FlyffUS/ -name *.res -exec ./flyffres {} \;
 ```
 
 # flyffjobs
-show properties for each job
+show properties for each job. requires extracting your res files first (see the find command in
+flyffres examples)
 
 ## example
 
