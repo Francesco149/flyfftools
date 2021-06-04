@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     printf("Max HP factor: %f\n", jobs[i].factorMaxHP);
     printf("Max MP factor: %f\n", jobs[i].factorMaxMP);
     printf("Max FP factor: %f\n", jobs[i].factorMaxFP);
-    printf("Def factor%f\n", jobs[i].factorDef);
+    printf("Def factor %f\n", jobs[i].factorDef);
     printf("HP recovery factor: %f\n", jobs[i].factorHPRecovery);
     printf("MP recovery factor: %f\n", jobs[i].factorMPRecovery);
     printf("FP recovery factor: %f\n", jobs[i].factorFPRecovery);
