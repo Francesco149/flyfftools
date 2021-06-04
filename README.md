@@ -24,3 +24,11 @@ cd /path/to/file.res_/
 find /path/to/FlyffUS/ -name *.res -exec ./flyffres {} \;
 ```
 
+# flyffjobs
+show properties for each job
+
+## example
+
+```sh
+./flyffjobs /path/to/FlyffUS
+```

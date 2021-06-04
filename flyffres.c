@@ -1,10 +1,9 @@
+#include "flyfflib.c"
+
 #define BUFSIZE 1<<26
 #define MAX_HDR_SIZE 1000000000
 
-#include <stdio.h>
 #include <errno.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #ifdef __linux__
@@ -57,18 +56,6 @@ void _DmpTime(char *name, U32 val) {
 #define DmpStr(x) (x)
 #endif
 
-#define MAlloc(var, size) *(var) = _MAlloc(#var, size)
-
-void* _MAlloc(char *name, int size) {
-  void *res = malloc(size);
-  if (!res) {
-    fprintf(stderr, "failed to allocate %s\n", name);
-    perror("malloc");
-    exit(1);
-  }
-  return res;
-}
-
 static U8 ResDecryptU8(U8 key, U8 data) {
   data = ~data ^ key;
   return (data << 4) | (data >> 4);
@@ -82,7 +69,8 @@ static void ResDecrypt(U8 key, U8* data, U32 size) {
 }
 
 char* RdFixedStr(U8 **data, int size) {
-  char* s = _MAlloc("RdFixedStr", size+1);
+  char* s;
+  MAlloc(&s, size+1);
   memcpy(s, *data, size);
   s[size] = 0;
   *data += size;
@@ -91,7 +79,8 @@ char* RdFixedStr(U8 **data, int size) {
 
 char* RdStr(U8 **data) {
   U16 len = Rd16(data);
-  char* s = _MAlloc("RdStr", len+1);
+  char* s;
+  MAlloc(&s, len+1);
   memcpy(s, *data, len);
   s[len] = 0;
   *data += len;
@@ -110,11 +99,8 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "usage: %s file.res\n", argv[0]);
     return 1;
   }
-  if (!(f = fopen(argv[1], "rb"))) {
-    perror("opening res file");
-    return 1;
-  }
 
+  f = FOpen(argv[1], "rb");
   MAlloc(&dstPath, strlen(argv[1])+2);
   strcpy(dstPath, argv[1]);
   strcat(dstPath, "_");
@@ -124,8 +110,7 @@ int main(int argc, char *argv[]) {
 
   p = cryptHdr;
   if (fread(cryptHdr, sizeof(cryptHdr), 1, f) != 1) {
-    perror("reading encryption header");
-    exit(1);
+    Fatal("read", "encryption header");
   }
   DmpInt(cryptKey = Rd8(&p));
   DmpInt(isCrypt = Rd8(&p)); /* header itself is "encrypted" even if this is false */
@@ -166,31 +151,19 @@ int main(int argc, char *argv[]) {
     strcat(path, name);
 
     printf("[%s] %s\n", isCrypt ? "E" : " ", path);
-    if (!(extracted = fopen(path, "wb"))) {
-      fprintf(stderr, "opening %s\n", path);
-      perror("fopen");
-      return 1;
-    }
-
-    if (fseek(f, offset, SEEK_SET) < 0) {
-      perror("fseek");
-      return 1;
-    }
+    extracted = FOpen(path, "wb");
+    FSeek(f, offset, SEEK_SET);
     while (size > 0) {
       U32 n = Min(size, BUFSIZE);
       if (fread(buf, n, 1, f) != 1) {
-        fprintf(stderr, "reading %s\n", name);
-        perror("fread");
-        return 1;
+        Fatal("read", name);
       }
       if (isCrypt) {
         ResDecrypt(cryptKey, buf, n);
       }
       size -= n;
       if (fwrite(buf, n, 1, extracted) != 1) {
-        fprintf(stderr, "writing %s\n", name);
-        perror("fwrite");
-        return 1;
+        Fatal("write", name);
       }
     }
 
@@ -198,6 +171,12 @@ int main(int argc, char *argv[]) {
     free(path);
     fclose(extracted);
   }
+
+  free(version);
+  free(hdr);
+  free(buf);
+  free(dstPath);
+  fclose(f);
 
   return 0;
 }
