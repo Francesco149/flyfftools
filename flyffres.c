@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <time.h>
+#include <utime.h>
 
 #ifdef __linux__
 #include <sys/stat.h>
@@ -92,21 +93,20 @@ int main(int argc, char *argv[]) {
   U8 *p, cryptHdr[6], cryptKey, isCrypt, *hdr, *buf;
   U32 hdrSize, i;
   U16 numFiles;
-  char *version, *dstPath;
+  char *version, *dstPath = "./flyff";
   size_t dstPathLen;
 
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s file.res\n", argv[0]);
+  if (argc < 2) {
+    fprintf(stderr, "usage: %s file.res [outpath=%s]\n", argv[0], dstPath);
     return 1;
   }
+  if (argc >= 3) {
+    dstPath = argv[2];
+  }
+  dstPathLen = strlen(dstPath);
+  MkDir(dstPath);
 
   f = FOpen(argv[1], "rb");
-  MAlloc(&dstPath, strlen(argv[1])+2);
-  strcpy(dstPath, argv[1]);
-  strcat(dstPath, "_");
-  dstPathLen = strlen(dstPath);
-
-  MkDir(dstPath);
 
   p = cryptHdr;
   if (fread(cryptHdr, sizeof(cryptHdr), 1, f) != 1) {
@@ -143,14 +143,25 @@ int main(int argc, char *argv[]) {
     DmpTime(time = Rd32(&p));
     DmpInt(offset = Rd32(&p));
 
-    (void)time; /* suppress warning */
-
     MAlloc(&path, dstPathLen + strlen(name) + 2);
     strcpy(path, dstPath);
     strcat(path, "/");
     strcat(path, name);
 
-    printf("[%s] %s\n", isCrypt ? "E" : " ", path);
+    printf("[%s] %s", isCrypt ? "E" : " ", path);
+
+    {
+      struct stat st;
+      if (stat(path, &st) >= 0) {
+        if (st.st_mtime > time) {
+          printf(" ### ignored, newer file already present ");
+          DmpTime(st.st_mtime);
+        }
+      }
+    }
+
+    printf("\n");
+
     extracted = FOpen(path, "wb");
     FSeek(f, offset, SEEK_SET);
     while (size > 0) {
@@ -167,15 +178,26 @@ int main(int argc, char *argv[]) {
       }
     }
 
+
+    fclose(extracted);
+
+    {
+      struct utimbuf t;
+      t.actime = time;
+      t.modtime = time;
+      if (utime(path, &t) < 0) {
+        perror("utime");
+        exit(1);
+      }
+    }
+
     free(name);
     free(path);
-    fclose(extracted);
   }
 
   free(version);
   free(hdr);
   free(buf);
-  free(dstPath);
   fclose(f);
 
   return 0;

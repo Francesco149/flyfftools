@@ -5,12 +5,7 @@ int main(int argc, char *argv[]) {
   JobProp *jobs;
   int numJobs, i;
 
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s /path/to/flyff\n", argv[0]);
-    return 1;
-  }
-
-  flyff = MkFlyff(argv[1]);
+  flyff = MkFlyff(argc >= 2 ? argv[1] : "./flyff");
   jobs = LdJobProps(flyff, &numJobs);
   for (i = 0; i < numJobs; ++i) {
     printf("\n# %s\n", jobs[i].id);

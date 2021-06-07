@@ -14,7 +14,7 @@ extracts .res archives
 
 ```sh
 ./flyffres /path/to/file.res
-cd /path/to/file.res_/
+ls ./flyff/
 ```
 
 ## example: finding and extracting all res files
@@ -22,6 +22,7 @@ cd /path/to/file.res_/
 
 ```sh
 find /path/to/FlyffUS/ -name *.res -exec ./flyffres {} \;
+ls ./flyff/
 ```
 
 # flyffjobs
@@ -31,5 +32,5 @@ flyffres examples)
 ## example
 
 ```sh
-./flyffjobs /path/to/FlyffUS
+./flyffjobs
 ```

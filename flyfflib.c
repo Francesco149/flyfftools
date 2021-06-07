@@ -189,7 +189,7 @@ static char *GetStr(char **p, char **buf) {
 
 JobProp *LdJobProps(Flyff *flyff, int *outCount) {
   JobProp *res = 0;
-  char *path = FlyffPath(flyff, "dataSub1.res_/propJob.inc");
+  char *path = FlyffPath(flyff, "propJob.inc");
   char *file = (char *)LdFile(path);
   char *p = file, *buf = 0;
   *outCount = 0;
